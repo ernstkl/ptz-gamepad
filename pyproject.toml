@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "ptz-gamepad"
+version = "0.1.0"
+description = ""
+authors = ["Ernst Kloppenburg <ernst.kloppenburg@gmx.de>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+ptzipcam = "^0.1.1"
+pygame = "^2.6.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
