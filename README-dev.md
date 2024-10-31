@@ -17,7 +17,8 @@ https://github.com/iingram/ptzipcam
 
 ptzipcam
 
-Schnittstelle bzgl. Winkel und Zoom ist nicht Winkel, sondern -1 .. 1
+Schnittstelle bzgl. Winkel ist nicht Winkel, sondern -1 .. 1
+bei Zoom: 0 .. 1
 
 das Mapping auf Winkel kann die library auch rechnen, dazu muss man
 den Winkel / zoombereich per config definieren.p

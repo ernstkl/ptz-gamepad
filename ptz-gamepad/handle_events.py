@@ -1,9 +1,11 @@
 
-deadband = 0.05
+# +/- dieser Wert um die Null herum zählt als Null
+deadband = 0.025
 
-# sinn ergeben hier nur werte < 1, weil bei skaliertem Wert > 1 wird abgeschnitten
+# Sinn ergeben hier nur Werte bis (1 + deadband)/(1 - deadband), also ungefähr 1, denn bei skaliertem Wert > 1 wird abgeschnitten
 max_vel = 1.0
 
+# minimale joystick-bewegung, um einen neuen befehl rauszuschicken
 min_change = 0.05
 min_change_ax2 = 0.02
 
@@ -41,10 +43,12 @@ class GamepadHandler:
             # neuen wert nur speichern, wenn die änderung groß genug, oder zurück in die nähe der null
             if abs(new_j_x - self.j_x) > min_change or abs(new_j_x) < deadband:
                 self.j_x = new_j_x
+
         elif axis == 1:
             new_j_y = value - self.j_y0
             if abs(new_j_y - self.j_y) > min_change or abs(new_j_y) < deadband:
                 self.j_y = new_j_y
+
         elif axis == 2:
             if abs(self.j_zoom - value) > min_change_ax2:
                 self.j_zoom = value
@@ -53,10 +57,23 @@ class GamepadHandler:
             # wenn beide Geschw. in toter Zone, dann stop
             if abs(self.j_x) < deadband and abs(self.j_y) < deadband:
                 self.cam.stop()
+
             else:
-                # -1..1 skalieren auf Geschwindigkeit in welcher Einheit? Wahrscheinlich -1 = max geschw links usw.
-                cam_vel_x = min(1.0, max(0.0, self.j_x * max_vel))
-                cam_vel_y = min(1.0, max(0.0, self.j_y * max_vel))
+                # Geschwindigkeit setzen
+                # - nicht die absolute joy-pos verwenden, sondern das was über's deadband hinausgeht
+                # - joypos -1..1 skalieren auf Geschwindigkeit -1 .. 1
+                if self.j_x < 0:
+                    j_x_eff = self.j_x + deadband
+                else:
+                    j_x_eff = self.j_x - deadband
+
+                if self.j_y < 0:
+                    j_y_eff = self.j_y + deadband
+                else:
+                    j_y_eff = self.j_y - deadband
+
+                cam_vel_x = min(1.0, max(0.0, j_x_eff * max_vel))
+                cam_vel_y = min(1.0, max(0.0, j_y_eff * max_vel))
                 self.cam.move(cam_vel_x, cam_vel_y)
 
         elif axis == 2:
