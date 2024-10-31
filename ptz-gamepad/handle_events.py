@@ -1,3 +1,5 @@
+from loguru import logger
+import yaml
 
 # +/- dieser Wert um die Null herum zählt als Null
 deadband = 0.025
@@ -28,9 +30,19 @@ class GamepadHandler:
         self.j_zoom = 0
 
         # wahr während button 6 gedrückt
-        self.save_preset_active = False
+        self.store_preset_active = False
 
+        # presets (erstmal ohne konfig-möglichkeit des pfades)
+        self.presets_filename = 'presets.yaml'
         self.presets = {}
+        try:
+            # jaja, man sollte das nicht mit try-except machen
+            with open(self.presets_filename, 'r') as file:
+                self.presets = yaml.safe_load(file)
+
+        except FileNotFoundError:
+            logger.info(f'could not open preset file {self.presets_filename}, starting with empty presets')
+
 
     def axis_0_1_calibrate(self, x, y):
         self.j_x0 = x
@@ -82,21 +94,29 @@ class GamepadHandler:
 
     def handle_button_down_event(self, button):
         if button == 6:
-            self.save_preset_active = True
+            self.store_preset_active = True
 
         if button < 6:
-            if self.save_preset_active:
-                print(f'saving preset {button}')
-                # TODO get camera position
+            if self.store_preset_active:
+                logger.info(f'storing preset {button}')
                 x_cam, y_cam, z_cam = self.cam.get_position()
+
                 self.presets[button] = [x_cam, y_cam, z_cam]
-                # TODO save to yaml-file
+
+                logger.info(f'saving preset file: {self.presets_filename}')
+                with open(self.presets_filename, 'w') as file:
+                    yaml.dump(self.presets, file)
+
 
             else:
                 # send preset to camera
-                x_cam, y_cam, z_cam = self.presets[button]
-                self.cam.absmove_w_zoom(x_cam, y_cam, z_cam)
+                if button in self.presets.keys():
+                    logger.info(f'sending preset {button} to camera')
+                    x_cam, y_cam, z_cam = self.presets[button]
+                    self.cam.absmove_w_zoom(x_cam, y_cam, z_cam)
+                else:
+                    logger.info(f'no preset stored for button {button}')
 
     def handle_button_up_event(self, button):
         if button == 6:
-            self.save_preset_active = False
+            self.store_preset_active = False
