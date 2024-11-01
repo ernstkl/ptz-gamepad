@@ -5,8 +5,15 @@
 
 import time
 import pygame
+import yaml
+
+from ptzipcam.ptz_camera import PtzCam
+
 from handle_events import GamepadHandler
 from mockup import DummyPtzCam
+
+
+use_cam_mockup = False
 
 pygame.init()
 
@@ -16,11 +23,27 @@ pygame.joystick.init()
 #create empty list to store joysticks
 joysticks = []
 
+# used for graceful shutdown (not implemented)
 run = True
 
-
 # init camera object
-cam = DummyPtzCam()
+
+if use_cam_mockup:
+    cam = DummyPtzCam()
+
+else:
+    config_file = 'cam_config.yml'
+
+    with open(config_file, 'r') as f:
+        cam_config = yaml.safe_load(f)
+
+    # ptz camera networking constants
+    IP = cam_config['IP']
+    PORT = cam_config['PORT']
+    USER = cam_config['USER']
+    PASS = cam_config['PASS']
+
+    cam = PtzCam(IP, PORT, USER, PASS)
 
 # init object that execute functions on events
 gh = GamepadHandler(cam)
@@ -68,6 +91,10 @@ while run:
         gh.handle_button_up_event(event.button)
 
     elif event.type == pygame.JOYAXISMOTION:
+
+        # ignore -- too much nonsense, and too slow motion right now
+        #continue
+    
         print(f"Axis {event.axis} motion, pos {event.value}")
 
         gh.handle_joyaxis_event(event.axis, event.value)
